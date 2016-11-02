@@ -2,10 +2,10 @@
 CC  ?= gcc
 CXX ?= g++
 
-_FLAGS    = -Wall -O2 $(shell pkg-config --cflags jack)
+_FLAGS    = -Wall -O2 $(shell pkg-config --cflags jack) $(shell pkg-config --cflags libudev)
 CFLAGS   += $(_FLAGS) -std=c99
 CXXFLAGS += $(_FLAGS) -std=c++11
-LDFLAGS  += $(shell pkg-config --libs jack) -lpthread
+LDFLAGS  += $(shell pkg-config --libs jack) -lpthread $(shell pkg-config --libs libudev)
 
 JACK_LIBDIR = $(shell pkg-config --variable=libdir jack)/jack/
 

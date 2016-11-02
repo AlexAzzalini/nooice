@@ -30,6 +30,7 @@ struct JackData {
         kDualShock3,
         kDualShock4,
         kGuitarHero,
+	kGenericJoystick,
     };
 
     bool joystick;
