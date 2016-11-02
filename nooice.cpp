@@ -24,9 +24,11 @@
 #include <ios>
 #include <sstream>
 #include <sys/ioctl.h>
+#include <linux/joystick.h>
 
 // --------------------------------------------------------------------------------------------------------------------
 
+#include "devices/genericjoystick.cpp"
 #include "devices/guitarhero.cpp"
 #include "devices/ps3.cpp"
 #include "devices/ps4.cpp"
@@ -42,12 +44,12 @@ static const int kJoystickMaxButton   = kJoystickButtonEnd-kJoystickButtonStart;
 
 // --------------------------------------------------------------------------------------------------------------------
 
-struct js_event {
-    unsigned int time;      /* event timestamp in milliseconds */
-    short value;            /* value */
-    unsigned char type;     /* event type */
-    unsigned char number;   /* axis/button number */
-};
+//struct js_event {
+//    unsigned int time;      /* event timestamp in milliseconds */
+//    short value;            /* value */
+//    unsigned char type;     /* event type */
+//    unsigned char number;   /* axis/button number */
+//};
 
 JackData::JackData() noexcept
 :
@@ -55,6 +57,8 @@ joystick(false),
          device(kNull),
          fd(-1),
          nr(-1),
+         nbuttons(0),
+         naxes(0),
          thread(0),
          client(nullptr),
          midiport(nullptr)
@@ -226,6 +230,11 @@ static bool nooice_init(JackData* const jackdata, const char* const device)
         else
         {
             jackdata->device = JackData::kGenericJoystick;
+	    int naxes, nbuttons;
+	    if (ioctl(jackdata->fd, JSIOCGAXES, &naxes) >= 0)
+	      jackdata->naxes = naxes;
+	    if (ioctl(jackdata->fd, JSIOCGBUTTONS, &nbuttons) >= 0)
+	      jackdata->naxes = nbuttons;
         }
         jackdata->nr = 9;
         deviceNum += 20;

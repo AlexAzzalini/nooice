@@ -13,7 +13,7 @@ all: build
 
 build: nooice nooice.so
 
-nooice: nooice.cpp devices/*.hpp
+nooice: nooice.cpp devices/*.[ch]pp
 	$(CXX) $< $(CXXFLAGS) $(LDFLAGS) -o $@
 
 nooice.so: nooice.cpp devices/*.hpp
