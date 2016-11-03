@@ -30,26 +30,6 @@ enum Bytes {
     kBytesAxes7,
     kBytesAxes8,
     kBytesButtons,
-    // special bytes, used for internal data
-    kBytesReservedInitiated  = 64,
-    kBytesReservedCurOctave  = 65,
-    kBytesReservedNoteGreen  = 66,
-    kBytesReservedNoteRed    = 67,
-    kBytesReservedNoteBlue   = 68,
-    kBytesReservedNoteYellow = 69,
-    kBytesReservedNoteOrange = 70,
-};
-
-// kBytesButtons
-enum ButtonMasks1 {
-    kButtonMaskGreen  = 0x01,
-    kButtonMaskRed    = 0x02,
-    kButtonMaskBlue   = 0x04,
-    kButtonMaskYellow = 0x08,
-    kButtonMaskOrange = 0x10,
-    kButtonMaskBack   = 0x20,
-    kButtonMaskStart  = 0x40,
-    kButtonMaskXbox   = 0x80,
 };
 
 static const Bytes kListCCs[] = {
@@ -71,31 +51,6 @@ void process(JackData* const jackdata, void* const midibuf, unsigned char tmpbuf
 
     // first time, send everything
     unsigned int maxAxes = (sizeof(kListCCs)/sizeof(Bytes) < jackdata->naxes) ? sizeof(kListCCs)/sizeof(Bytes) : jackdata->naxes;
-    
-    if (jackdata->oldbuf[kBytesReservedInitiated] == 0)
-    {
-        jackdata->oldbuf[kBytesReservedInitiated]  = 1;
-        jackdata->oldbuf[kBytesReservedCurOctave]  = 5;
-        jackdata->oldbuf[kBytesReservedNoteGreen]  = 255;
-        jackdata->oldbuf[kBytesReservedNoteRed]    = 255;
-        jackdata->oldbuf[kBytesReservedNoteBlue]   = 255;
-        jackdata->oldbuf[kBytesReservedNoteYellow] = 255;
-        jackdata->oldbuf[kBytesReservedNoteOrange] = 255;
-
-        // send CCs
-        mididata[0] = 0xB0;
-        for (size_t i=0, k; i < maxAxes; ++i)
-        {
-            k = kListCCs[i];
-            mididata[1] = i+1;
-            mididata[2] = jackdata->oldbuf[k] = tmpbuf[k]/2;
-            jack_midi_event_write(midibuf, 0, mididata, 3);
-        }
-
-        // save current button state
-        jackdata->oldbuf[kBytesButtons] = tmpbuf[kBytesButtons];
-        return;
-    }
 
     // send CCs
     mididata[0] = 0xB0;
