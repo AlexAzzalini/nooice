@@ -70,6 +70,8 @@ void process(JackData* const jackdata, void* const midibuf, unsigned char tmpbuf
     jack_midi_data_t mididata[3];
 
     // first time, send everything
+    unsigned int maxAxes = (sizeof(kListCCs)/sizeof(Bytes) < jackdata->naxes) ? sizeof(kListCCs)/sizeof(Bytes) : jackdata->naxes;
+    
     if (jackdata->oldbuf[kBytesReservedInitiated] == 0)
     {
         jackdata->oldbuf[kBytesReservedInitiated]  = 1;
@@ -82,7 +84,7 @@ void process(JackData* const jackdata, void* const midibuf, unsigned char tmpbuf
 
         // send CCs
         mididata[0] = 0xB0;
-        for (size_t i=0, k; i < sizeof(kListCCs)/sizeof(Bytes); ++i)
+        for (size_t i=0, k; i < maxAxes; ++i)
         {
             k = kListCCs[i];
             mididata[1] = i+1;
@@ -97,7 +99,7 @@ void process(JackData* const jackdata, void* const midibuf, unsigned char tmpbuf
 
     // send CCs
     mididata[0] = 0xB0;
-    for (size_t i=0, k; i < sizeof(kListCCs)/sizeof(Bytes); ++i)
+    for (size_t i=0, k; i < maxAxes; ++i)
     {
         k = kListCCs[i];
         tmpbuf[k] /= 2;
@@ -109,157 +111,48 @@ void process(JackData* const jackdata, void* const midibuf, unsigned char tmpbuf
         jack_midi_event_write(midibuf, 0, mididata, 3);
     }
 
-    // send note on/off
-    /*
-    if (tmpbuf[kBytesTriggerY] != jackdata->oldbuf[kBytesTriggerY])
-    {
-        jackdata->oldbuf[kBytesTriggerY] = tmpbuf[kBytesTriggerY];
-
-        // note on
-        if (tmpbuf[kBytesTriggerY] != 0x7F)
-        {
-            const bool green  = tmpbuf[kBytesButtons] & kButtonMaskGreen;  // 10
-            const bool red    = tmpbuf[kBytesButtons] & kButtonMaskRed;    // 1
-            const bool yellow = tmpbuf[kBytesButtons] & kButtonMaskYellow; // 7
-            const bool blue   = tmpbuf[kBytesButtons] & kButtonMaskBlue;   // 5
-            const bool orange = tmpbuf[kBytesButtons] & kButtonMaskOrange; // 2
-
-            jack_nframes_t time = 0;
-            const unsigned char root = jackdata->oldbuf[kBytesReservedCurOctave]*12;
-
-            if (green)
-            {
-                mididata[0] = 0x90;
-                mididata[1] = root+10;
-                mididata[2] = 100;
-                jack_midi_event_write(midibuf, time, mididata, 3);
-                time += 25;
-                jackdata->oldbuf[kBytesReservedNoteGreen] = mididata[1];
-            }
-            if (red)
-            {
-                mididata[0] = 0x90;
-                mididata[1] = root+1;
-                mididata[2] = 100;
-                jack_midi_event_write(midibuf, time, mididata, 3);
-                time += 25;
-                jackdata->oldbuf[kBytesReservedNoteRed] = mididata[1];
-            }
-            if (yellow)
-            {
-                mididata[0] = 0x90;
-                mididata[1] = root+7;
-                mididata[2] = 100;
-                jack_midi_event_write(midibuf, time, mididata, 3);
-                time += 25;
-                jackdata->oldbuf[kBytesReservedNoteYellow] = mididata[1];
-            }
-            if (blue)
-            {
-                mididata[0] = 0x90;
-                mididata[1] = root+5;
-                mididata[2] = 100;
-                jack_midi_event_write(midibuf, time, mididata, 3);
-                time += 25;
-                jackdata->oldbuf[kBytesReservedNoteBlue] = mididata[1];
-            }
-            if (orange)
-            {
-                mididata[0] = 0x90;
-                mididata[1] = root+2;
-                mididata[2] = 100;
-                jack_midi_event_write(midibuf, time, mididata, 3);
-                time += 25;
-                jackdata->oldbuf[kBytesReservedNoteOrange] = mididata[1];
-            }
-        }
-        else
-        // note offs
-        {
-            if (jackdata->oldbuf[kBytesReservedNoteGreen] < 128)
-            {
-                mididata[0] = 0x80;
-                mididata[1] = jackdata->oldbuf[kBytesReservedNoteGreen];
-                mididata[2] = 0;
-                jack_midi_event_write(midibuf, 0, mididata, 3);
-                jackdata->oldbuf[kBytesReservedNoteGreen] = 255;
-            }
-            if (jackdata->oldbuf[kBytesReservedNoteRed] < 128)
-            {
-                mididata[0] = 0x80;
-                mididata[1] = jackdata->oldbuf[kBytesReservedNoteRed];
-                mididata[2] = 0;
-                jack_midi_event_write(midibuf, 0, mididata, 3);
-                jackdata->oldbuf[kBytesReservedNoteRed] = 255;
-            }
-            if (jackdata->oldbuf[kBytesReservedNoteYellow] < 128)
-            {
-                mididata[0] = 0x80;
-                mididata[1] = jackdata->oldbuf[kBytesReservedNoteYellow];
-                mididata[2] = 0;
-                jack_midi_event_write(midibuf, 0, mididata, 3);
-                jackdata->oldbuf[kBytesReservedNoteYellow] = 255;
-            }
-            if (jackdata->oldbuf[kBytesReservedNoteBlue] < 128)
-            {
-                mididata[0] = 0x80;
-                mididata[1] = jackdata->oldbuf[kBytesReservedNoteBlue];
-                mididata[2] = 0;
-                jack_midi_event_write(midibuf, 0, mididata, 3);
-                jackdata->oldbuf[kBytesReservedNoteBlue] = 255;
-            }
-            if (jackdata->oldbuf[kBytesReservedNoteOrange] < 128)
-            {
-                mididata[0] = 0x80;
-                mididata[1] = jackdata->oldbuf[kBytesReservedNoteOrange];
-                mididata[2] = 0;
-                jack_midi_event_write(midibuf, 0, mididata, 3);
-                jackdata->oldbuf[kBytesReservedNoteOrange] = 255;
-            }
-        }
-    }
-    */
-
     // handle button presses
-    if (tmpbuf[kBytesButtons] == jackdata->oldbuf[kBytesButtons])
-        return;
-
-    unsigned char newbyte, oldbyte;
-    int mask;
-
-    // 8 byte masks
-    for (int i=0; i<8; ++i)
+    unsigned int nbytes = jackdata->nbuttons/8 + 1;
+    for (unsigned int j=0; j<nbytes; j++)
     {
-        mask    = 1<<i;
-        newbyte = tmpbuf[kBytesButtons] & mask;
-        oldbyte = jackdata->oldbuf[kBytesButtons] & mask;
-
-        if (newbyte == oldbyte)
-            continue;
-
-        // we only care about button presses here
-        if (newbyte == 0)
-            continue;
-
-        switch (mask)
+        if (tmpbuf[kBytesButtons+j] != jackdata->oldbuf[kBytesButtons+j])
         {
-        case kButtonMaskBack:
-            if (jackdata->oldbuf[kBytesReservedCurOctave] > 0)
-                jackdata->oldbuf[kBytesReservedCurOctave] -= 1;
-            break;
-        case kButtonMaskStart:
-            if (jackdata->oldbuf[kBytesReservedCurOctave] < 10)
-                jackdata->oldbuf[kBytesReservedCurOctave] += 1;
-            break;
-        case kButtonMaskXbox:
-            jackdata->oldbuf[kBytesReservedCurOctave] = 5;
-            break;
+            unsigned char newbyte, oldbyte;
+            int mask;
+
+            // 8 byte masks
+            for (unsigned int i=0; i<8; ++i)
+            {
+                mask    = 1<<i;
+                newbyte = tmpbuf[kBytesButtons] & mask;
+                oldbyte = jackdata->oldbuf[kBytesButtons] & mask;
+
+                if (newbyte == oldbyte)
+                    continue;
+
+                // we only care about button presses here
+                if (newbyte == 1)
+		{ // Note on
+		  mididata[0] = 0x90;
+		  mididata[1] = j*8+i;
+		  mididata[2] = 100;
+		}
+		else
+		{
+		  mididata[0] = 0x80;
+		  mididata[1] = j*8+i;
+		  mididata[2] = 0;
+		}
+		jack_midi_event_write(midibuf, 0, mididata, 3);
+                
+            }
+
+            jackdata->oldbuf[kBytesButtons] = tmpbuf[kBytesButtons];
+
         }
     }
 
-    jackdata->oldbuf[kBytesButtons] = tmpbuf[kBytesButtons];
 }
-
 // --------------------------------------------------------------------------------------------------------------------
 
 }

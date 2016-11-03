@@ -36,7 +36,7 @@ struct JackData {
     bool joystick;
     Device device;
     int fd, nr;
-    int nbuttons,naxes;
+    unsigned int nbuttons,naxes;
     pthread_t thread;
     pthread_mutex_t mutex;
     jack_client_t* client;
