@@ -124,23 +124,23 @@ void process(JackData* const jackdata, void* const midibuf, unsigned char tmpbuf
             for (unsigned int i=0; i<8; ++i)
             {
                 mask    = 1<<i;
-                newbyte = tmpbuf[kBytesButtons] & mask;
-                oldbyte = jackdata->oldbuf[kBytesButtons] & mask;
+                newbyte = tmpbuf[kBytesButtons+j] & mask;
+                oldbyte = jackdata->oldbuf[kBytesButtons+j] & mask;
 
                 if (newbyte == oldbyte)
                     continue;
 
                 // we only care about button presses here
-                if (newbyte == 1)
+                if (newbyte > 0)
 		{ // Note on
-		  mididata[0] = 0x90;
-		  mididata[1] = j*8+i;
+		  mididata[0] = 0xB0;
+		  mididata[1] = 64+j*8+i;
 		  mididata[2] = 100;
 		}
 		else
 		{
-		  mididata[0] = 0x80;
-		  mididata[1] = j*8+i;
+		  mididata[0] = 0xB0;
+		  mididata[1] = 64+j*8+i;
 		  mididata[2] = 0;
 		}
 		jack_midi_event_write(midibuf, 0, mididata, 3);
